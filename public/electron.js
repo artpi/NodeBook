@@ -6,11 +6,12 @@ const path = require('path');
 const isDev = require('electron-is-dev');
 var fs = require('fs');
 const sqlite3 = require('sqlite3');
+const { ipcMain } = require('electron');
 
 let mainWindow;
 
 
-function loadNotes() {
+function loadNotes( mainWindow ) {
   const data = {
     'notes': [],
     'terms': {},
@@ -39,21 +40,34 @@ function loadNotes() {
             'term': row.ZTITLE,
             'note' : note,
             'references' : [],
+            'regexp': new RegExp( '[^0-9a-zA-Z]' + row.ZTITLE.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&') + '[^0-9a-zA-Z]', "i" ),
           };
       }
     } );
 
     Promise.all( data.notes.map( note => new Promise( (resolve, reject) => {
-      fs.readFile( note.dir + '/content.enml', {encoding: 'utf-8'}, function(err,data){
+      fs.readFile( note.dir + '/content.enml', {encoding: 'utf-8'}, function(err,notecontent){
           if ( !err ) {
-              note.content = data.replace(/(<([^>]+)>)/ig," ");
+              const content = notecontent.replace(/(<([^>]+)>)/ig," ");
+              
+              Object.values( data.terms ).forEach( term => {
+                if( term.term.length < 5 ) {
+                  return;
+                }
+                if ( term.note.guid === note.guid ) {
+                  return
+                }
+                if( content.search( term.regexp ) !== -1 ) {
+                  term.references.push( note );
+                }
+              } );
               resolve( note );
           } else {
               reject( err );
           }
       });
     } ) ) ).then( dat => {
-      console.log( dat );
+      mainWindow.webContents.send( 'terms', JSON.stringify( data.terms ) );
     } );
     
     
@@ -68,15 +82,26 @@ function loadNotes() {
 }
 
 function createWindow() {
-  loadNotes();
-  // mainWindow = new BrowserWindow({width: 900, height: 680});
-  // mainWindow.loadURL(isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, '../build/index.html')}`);
-  // if (isDev) {
-  //   // Open the DevTools.
-  //   //BrowserWindow.addDevToolsExtension('<location to your react chrome extension>');
-  //   mainWindow.webContents.openDevTools();
-  // }
-  // mainWindow.on('closed', () => mainWindow = null);
+  mainWindow = new BrowserWindow({
+    width: 900,
+    height: 680,
+    webPreferences: {
+      nodeIntegration: true,
+      preload: __dirname + '/preload.js'
+    }
+  });
+  mainWindow.loadURL(isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, '../build/index.html')}`);
+  if (isDev) {
+    // Open the DevTools.
+    //BrowserWindow.addDevToolsExtension('<location to your react chrome extension>');
+    mainWindow.webContents.openDevTools();
+  }
+  mainWindow.webContents.once('did-finish-load', () => {
+    console.log( "Did finishi load fired!" );
+    loadNotes( mainWindow );
+  });
+  
+  mainWindow.on('closed', () => mainWindow = null);
 }
 
 app.on('ready', createWindow);
