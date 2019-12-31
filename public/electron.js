@@ -24,7 +24,7 @@ function loadNotes( mainWindow ) {
     console.log('Connected to the chinook database.');
   });
    
-  db.all(`SELECT N.ZGUID,N.ZTITLE, N.ZLOCALUUID, NB.ZNAME FROM ZENNOTE N JOIN ZENNOTEBOOK NB  where N.ZDATEDELETED < 0 AND N.ZNOTEBOOK = NB.Z_PK AND NB.ZNAME='@Marketing'  ORDER BY N.ZDATEUPDATED DESC;`, (err, rows) => {
+  db.all(`SELECT N.ZGUID,N.ZTITLE, N.ZLOCALUUID, NB.ZNAME FROM ZENNOTE N JOIN ZENNOTEBOOK NB  where N.ZDATEDELETED < 0 AND N.ZNOTEBOOK = NB.Z_PK AND NB.ZNAME='Zeszycik'  ORDER BY N.ZDATEUPDATED DESC;`, (err, rows) => {
     if (err) {
       console.error(err.message);
     }
