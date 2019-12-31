@@ -6,10 +6,6 @@ import * as serviceWorker from './serviceWorker';
 
 ReactDOM.render(<App />, document.getElementById('root'));
 
-console.log( window.ipcRenderer );
-window.ipcRenderer.on( 'terms', (event, message) => {
-  console.log( JSON.parse( message ) );
-} );
 
 
 
