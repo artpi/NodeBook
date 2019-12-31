@@ -11,7 +11,21 @@ const { ipcMain } = require('electron');
 let mainWindow;
 
 
+function loadFromCache( mainWindow ) {
+      fs.readFile( '/Users/artpi/Desktop/nodes_cache.json', {encoding: 'utf-8'}, function(err,data){
+          if ( !err ) {
+              mainWindow.webContents.send( 'cache', data );
+          } else {
+              console.log( err );
+          }
+      });
+}
+
 function loadNotes( mainWindow ) {
+
+  const notebooks = [ '@Business', 'HotContent', 'Commonplace', 'Ref', 'Zrobic', 'Chcę', 'Earn', 'Grateful', 'Inwestycje', 'Kopki', 'Marysia', 'Podróże', 'Rodzina', 'TED', 'Zdrowie & Sport' ];
+  const inStatement = '(' + notebooks.map( n => "'" + n + "'" ).join( ',') + ')';
+
   const data = {
     'notes': [],
     'terms': {},
@@ -24,7 +38,7 @@ function loadNotes( mainWindow ) {
     console.log('Connected to the chinook database.');
   });
    
-  db.all(`SELECT N.ZGUID,N.ZTITLE, N.ZLOCALUUID, NB.ZNAME FROM ZENNOTE N JOIN ZENNOTEBOOK NB  where N.ZDATEDELETED < 0 AND N.ZNOTEBOOK = NB.Z_PK AND NB.ZNAME='Zeszycik'  ORDER BY N.ZDATEUPDATED DESC;`, (err, rows) => {
+  db.all(`SELECT N.ZGUID,N.ZTITLE, N.ZLOCALUUID, NB.ZNAME FROM ZENNOTE N JOIN ZENNOTEBOOK NB  where N.ZDATEDELETED < 0 AND N.ZNOTEBOOK = NB.Z_PK AND NB.ZNAME IN ${inStatement}  ORDER BY N.ZDATEUPDATED DESC;`, (err, rows) => {
     if (err) {
       console.error(err.message);
     }
@@ -32,6 +46,7 @@ function loadNotes( mainWindow ) {
       const note = {
         'title' : row.ZTITLE,
         'guid' : row.ZGUID,
+        'notebook': row.ZNAME,
         'dir' : dbdir + '/content/' + row.ZLOCALUUID,
       }
       data.notes.push( note );
@@ -94,11 +109,11 @@ function createWindow() {
   if (isDev) {
     // Open the DevTools.
     //BrowserWindow.addDevToolsExtension('<location to your react chrome extension>');
-    mainWindow.webContents.openDevTools();
+    // mainWindow.webContents.openDevTools();
   }
   mainWindow.webContents.on('did-finish-load', () => {
     console.log( "Did finishi load fired!" );
-    loadNotes( mainWindow );
+    loadFromCache( mainWindow );
   });
   
   mainWindow.on('closed', () => mainWindow = null);

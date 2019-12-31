@@ -9,17 +9,31 @@
 
 <style>
     #cy {
-        width: 100%;
+        width: calc( 100% - 200px );
         height: 100%;
         position: absolute;
         top: 0px;
         left: 0px;
+        display: none;
+    }
+    #loading {
+        text-align: center;
+        padding-top: 300px;
     }
 </style>
 
-<body>
-    <div id="cy" ></div>
-    <script>
-    </script>
+<body style="display: flex; flex-direction: row;padding:0;margin:0">
+    <div style="width: calc( 100% - 200px ); display: flex;flex-grow: 1;padding:0;margin:0">
+      <div id="cy" ></div>
+      <div id="loading"> Please wait, loading data... </div>
+    </div>
+    <div style="flex-grow: 0; width: 200px;height:100%; background-color:gray;margin:0;">
+      <div id='selectednote'>
+        
+      </div>
+      <a href='#' id='selected_node_hide'>Hide selected node</a>
+      <a href='#' id='selected_node_open'>Open in Evernote</a>
+      <h3>Settings:</h3>
+    </div>
 </body>
 </html>
