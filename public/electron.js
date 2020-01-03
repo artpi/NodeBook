@@ -1,6 +1,8 @@
 const electron = require('electron');
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
+const Menu = electron.Menu;
+const dialog = electron.dialog;
 
 const path = require('path');
 const isDev = require('electron-is-dev');
@@ -11,8 +13,8 @@ const { ipcMain } = require('electron');
 let mainWindow;
 
 
-function loadFromCache( mainWindow ) {
-      fs.readFile( '/Users/artpi/Desktop/nodes_cache.json', {encoding: 'utf-8'}, function(err,data){
+function loadFromCache( mainWindow, file ) {
+      fs.readFile( file, {encoding: 'utf-8'}, function( err,data ){
           if ( !err ) {
               mainWindow.webContents.send( 'cache', data );
           } else {
@@ -99,6 +101,7 @@ function loadNotes( mainWindow ) {
 }
 
 function createWindow() {
+
   mainWindow = new BrowserWindow({
     width: 900,
     height: 680,
@@ -107,6 +110,34 @@ function createWindow() {
       preload: __dirname + '/preload.js'
     }
   });
+  const menu = Menu.buildFromTemplate( [
+    {
+      label: 'File',
+      submenu: [
+        {
+          label:'Save Data',
+          click() {
+            const saveDir = dialog.showSaveDialogSync( mainWindow, {
+              buttonLabel: 'Save current state here',
+            } );
+            if( saveDir ) {
+              console.log( 'save to ' + saveDir );
+            }
+          }
+        },
+        {
+          label:'Open Saved State',
+          click() {
+            const file = dialog.showOpenDialogSync({ properties: ['openFile'], buttonLabel: 'Open this saved session' });
+            if ( file ) {
+              loadFromCache( mainWindow, file[0] );
+            }
+          }
+        },
+      ]
+    }
+  ] );
+  Menu.setApplicationMenu( menu );
   mainWindow.loadURL(isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, '../build/index.html')}`);
   if (isDev) {
     // Open the DevTools.
@@ -116,7 +147,7 @@ function createWindow() {
   mainWindow.webContents.on('did-finish-load', () => {
     console.log( "Did finishi load fired!" );
     // loadFromCache( mainWindow );
-    loadNotes( mainWindow );
+    // loadNotes( mainWindow );
   });
   ipcMain.on('save_action', ( event, data ) => {
     console.log( 'Saving' );
