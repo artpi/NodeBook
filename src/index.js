@@ -13,11 +13,12 @@ document.addEventListener('DOMContentLoaded', function() {
           window.selectedNode.remove();
         }
       } );
-      // document.getElementById('save_action').addEventListener( 'click', function() {
-      //   const elements = JSON.stringify( window.cy.elements().map( el => el.json() ) );
-      //   console.log( 'sending', elements )
-      //   window.ipcRenderer.send( 'save_action', elements );
-      // } );
+      
+      window.ipcRenderer.on('menu_save', ( event, arg ) => {
+        const elements = JSON.stringify( window.cy.elements().map( el => el.json() ) );
+        console.log( 'saving', elements );
+        window.ipcRenderer.send( 'save_action', elements );
+      } );
 
       window.ipcRenderer.on('terms', ( event, arg ) => {
         loadingContainer.innerText = "Received data from filesystem. Parsing";

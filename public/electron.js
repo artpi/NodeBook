@@ -9,6 +9,7 @@ const isDev = require('electron-is-dev');
 var fs = require('fs');
 const sqlite3 = require('sqlite3');
 const { ipcMain } = require('electron');
+const glob = require('glob');
 
 let mainWindow;
 
@@ -23,7 +24,8 @@ function loadFromCache( mainWindow, file ) {
       });
 }
 
-function loadNotes( mainWindow ) {
+function loadNotes( mainWindow, localNoteStore ) {
+  const dbdir = localNoteStore.replace( '/localNoteStore/LocalNoteStore.sqlite', '' );
 
   const notebooks = [ 'Zeszycik', '@Business', 'HotContent', 'Commonplace', 'Ref', 'Zrobic', 'Chcę', 'Earn', 'Grateful', 'Inwestycje', 'Kopki', 'Marysia', 'Podróże', 'Rodzina', 'TED', 'Zdrowie & Sport' ];
   const inStatement = '(' + notebooks.map( n => "'" + n + "'" ).join( ',') + ')';
@@ -32,8 +34,8 @@ function loadNotes( mainWindow ) {
     'notes': [],
     'terms': {},
   };
-  var dbdir =  '/Users/artpi/Library/Group Containers/Q79WDW8YH9.com.evernote.Evernote/CoreNote/accounts/www.evernote.com/1967834';
-  let db = new sqlite3.Database(dbdir + '/localNoteStore/LocalNoteStore.sqlite', sqlite3.OPEN_READONLY, (err) => {
+
+  let db = new sqlite3.Database( localNoteStore, sqlite3.OPEN_READONLY, (err) => {
     if (err) {
       console.error(err.message);
     }
@@ -80,7 +82,7 @@ function loadNotes( mainWindow ) {
                   term.references.push( note );
                 }
               } );
-              
+              resolve();
           } else {
               reject( err );
           }
@@ -110,6 +112,7 @@ function createWindow() {
       preload: __dirname + '/preload.js'
     }
   });
+  let saveDir = "";
   const menu = Menu.buildFromTemplate( [
     {
       label: 'File',
@@ -117,11 +120,12 @@ function createWindow() {
         {
           label:'Save Data',
           click() {
-            const saveDir = dialog.showSaveDialogSync( mainWindow, {
+            saveDir = dialog.showSaveDialogSync( mainWindow, {
               buttonLabel: 'Save current state here',
             } );
             if( saveDir ) {
               console.log( 'save to ' + saveDir );
+              mainWindow.webContents.send( 'menu_save' );
             }
           }
         },
@@ -132,6 +136,31 @@ function createWindow() {
             if ( file ) {
               loadFromCache( mainWindow, file[0] );
             }
+          }
+        },
+        {
+          label:'Load from Evernote',
+          click() {
+            const startPath = app.getPath('home') + '/Library/Group Containers/';
+            const globPath = startPath + '*.com.evernote.Evernote/CoreNote/accounts/www.evernote.com/*/localNoteStore/LocalNoteStore.sqlite'
+            glob( globPath, {}, function ( er, files ) {
+              if( files ) {
+                loadNotes( mainWindow, files[0] );
+                return;
+              }
+              const file = dialog.showOpenDialogSync( {
+                defaultPath: startPath,
+                title: 'You are searching for "localNoteStore/LocalNoteStore.sqlite" somewhere in a dir with evernote name on it.',
+                properties: ['openFile'],
+                filters: [
+                  { name: 'Evernote Database', extensions: [ 'sqlite' ] }
+                ],
+                buttonLabel: 'Open this database'
+              });
+              if ( file ) {
+                loadNotes( mainWindow, file[0] );
+              }
+            } );            
           }
         },
       ]
@@ -151,7 +180,8 @@ function createWindow() {
   });
   ipcMain.on('save_action', ( event, data ) => {
     console.log( 'Saving' );
-    fs.writeFile( "/Users/artpi/Desktop/nodes_cache.json" ,data, function(err) {
+    console.log( data );
+    fs.writeFile( saveDir ,data, function(err) {
     if(err) {
         return console.log(err);
     }
