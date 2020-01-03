@@ -2,6 +2,7 @@ const electron = require('electron');
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 const Menu = electron.Menu;
+const MenuItem = electron.MenuItem;
 const dialog = electron.dialog;
 
 const path = require('path');
@@ -12,7 +13,7 @@ const { ipcMain } = require('electron');
 const glob = require('glob');
 
 let mainWindow;
-
+let mainMenu;
 
 function loadFromCache( mainWindow, file ) {
       console.log( 'Loading from file ' + file );
@@ -34,6 +35,7 @@ function loadNotes( mainWindow, localNoteStore ) {
   const data = {
     'notes': [],
     'terms': {},
+    'notebooks': [],
   };
 
   let db = new sqlite3.Database( localNoteStore, sqlite3.OPEN_READONLY, (err) => {
@@ -54,6 +56,9 @@ function loadNotes( mainWindow, localNoteStore ) {
         'guid' : row.ZGUID,
         'notebook': row.ZNAME,
         'dir' : dbdir + '/content/' + row.ZLOCALUUID,
+      }
+      if ( data.notebooks.indexOf( row.ZNAME ) === -1 ) {
+        data.notebooks.push( row.ZNAME );
       }
       data.notes.push( note );
       if ( ! data.terms.hasOwnProperty( row.ZTITLE ) ) {
@@ -93,7 +98,16 @@ function loadNotes( mainWindow, localNoteStore ) {
     } ) ) ).then( dat => {
       mainWindow.webContents.send( 'terms', JSON.stringify( data.terms ) );
     } );
-    
+    mainMenu.append( new MenuItem( {
+      label: 'Notebooks',
+      submenu: data.notebooks.map( nbook => ( {
+          label: nbook,
+          click: function() {
+            console.log( nbook );
+          }
+      } ) )
+    } ) );
+    Menu.setApplicationMenu( mainMenu );
     
   });
    
@@ -116,7 +130,7 @@ function createWindow() {
     }
   });
   let saveDir = "";
-  const menu = Menu.buildFromTemplate( [
+  mainMenu = Menu.buildFromTemplate( [
     {
       label: 'File',
       submenu: [
@@ -170,7 +184,7 @@ function createWindow() {
       ]
     }
   ] );
-  Menu.setApplicationMenu( menu );
+  Menu.setApplicationMenu( mainMenu );
   mainWindow.loadURL(isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, '../build/index.html')}`);
   if (isDev) {
     // Open the DevTools.
