@@ -25,6 +25,7 @@ function loadFromCache( mainWindow, file ) {
 }
 
 function loadNotes( mainWindow, localNoteStore ) {
+  mainWindow.webContents.send( 'update', "Reading your notes. Please wait." );
   const dbdir = localNoteStore.replace( '/localNoteStore/LocalNoteStore.sqlite', '' );
 
   const notebooks = [ 'Zeszycik', '@Business', 'HotContent', 'Commonplace', 'Ref', 'Zrobic', 'Chcę', 'Earn', 'Grateful', 'Inwestycje', 'Kopki', 'Marysia', 'Podróże', 'Rodzina', 'TED', 'Zdrowie & Sport' ];
@@ -41,8 +42,8 @@ function loadNotes( mainWindow, localNoteStore ) {
     }
     console.log('Connected to the chinook database.');
   });
-   
-  db.all(`SELECT N.ZGUID,N.ZTITLE, N.ZLOCALUUID, NB.ZNAME FROM ZENNOTE N JOIN ZENNOTEBOOK NB  where N.ZDATEDELETED < 0 AND N.ZNOTEBOOK = NB.Z_PK AND NB.ZNAME IN ${inStatement}  ORDER BY N.ZDATEUPDATED DESC;`, (err, rows) => {
+   //AND NB.ZNAME IN ${inStatement}
+  db.all(`SELECT N.ZGUID,N.ZTITLE, N.ZLOCALUUID, NB.ZNAME FROM ZENNOTE N JOIN ZENNOTEBOOK NB  where N.ZDATEDELETED < 0 AND N.ZNOTEBOOK = NB.Z_PK  ORDER BY N.ZDATEUPDATED DESC;`, (err, rows) => {
     if (err) {
       console.error(err.message);
     }

@@ -13,11 +13,14 @@ document.addEventListener('DOMContentLoaded', function() {
           window.selectedNode.remove();
         }
       } );
-      
+
       window.ipcRenderer.on('menu_save', ( event, arg ) => {
         const elements = JSON.stringify( window.cy.elements().map( el => el.json() ) );
         console.log( 'saving', elements );
         window.ipcRenderer.send( 'save_action', elements );
+      } );
+      window.ipcRenderer.on('update', ( event, arg ) => {
+        loadingContainer.innerText = arg;
       } );
 
       window.ipcRenderer.on('terms', ( event, arg ) => {
