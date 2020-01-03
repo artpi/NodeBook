@@ -1,29 +1,39 @@
 {
-  "name": "notexplorer",
+  "name": "NodeBook",
   "version": "0.1.0",
   "private": true,
   "main": "public/electron.js",
   "dependencies": {
-    "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.3.2",
-    "@testing-library/user-event": "^7.1.2",
     "cose-base": "^1.0.1",
     "cytoscape": "^3.12.1",
     "cytoscape-cose-bilkent": "^4.1.0",
     "electron-is-dev": "^1.1.0",
     "glob": "^7.1.6",
-    "react": "^16.12.0",
-    "react-cytoscapejs": "^1.2.1",
-    "react-dom": "^16.12.0",
     "react-scripts": "3.3.0",
     "sqlite3": "^4.1.1"
   },
+  "build": {
+    "appId": "com.artpi.nodebook",
+    "mac": {
+      "category": "your.app.category.type"
+    }
+  },
   "scripts": {
     "start": "react-scripts start",
-    "electron-dev": "concurrently \"BROWSER=none yarn start\" \"wait-on http://localhost:3000 && electron .\""
+    "electron-dev": "concurrently \"BROWSER=none yarn start\" \"wait-on http://localhost:3000 && electron .\"",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "postinstall": "electron-builder install-app-deps"
   },
   "eslintConfig": {
     "extends": "react-app"
+  },
+  "devDependencies": {
+    "concurrently": "^5.0.2",
+    "electron": "^7.1.7",
+    "electron-builder": "^21.2.0",
+    "electron-rebuild": "^1.8.8",
+    "wait-on": "^3.3.0"
   },
   "browserslist": {
     "production": [
@@ -36,12 +46,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "concurrently": "^5.0.2",
-    "electron": "^7.1.7",
-    "electron-builder": "^21.2.0",
-    "electron-rebuild": "^1.8.8",
-    "wait-on": "^3.3.0"
   }
 }

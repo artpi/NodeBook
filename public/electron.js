@@ -15,8 +15,10 @@ let mainWindow;
 
 
 function loadFromCache( mainWindow, file ) {
+      console.log( 'Loading from file ' + file );
       fs.readFile( file, {encoding: 'utf-8'}, function( err,data ){
-          if ( !err ) {
+        console.log( 'File loaded ' + data );
+          if ( ! err ) {
               mainWindow.webContents.send( 'cache', data );
           } else {
               console.log( err );
@@ -27,9 +29,6 @@ function loadFromCache( mainWindow, file ) {
 function loadNotes( mainWindow, localNoteStore ) {
   mainWindow.webContents.send( 'update', "Reading your notes. Please wait." );
   const dbdir = localNoteStore.replace( '/localNoteStore/LocalNoteStore.sqlite', '' );
-
-  const notebooks = [ 'Zeszycik', '@Business', 'HotContent', 'Commonplace', 'Ref', 'Zrobic', 'Chcę', 'Earn', 'Grateful', 'Inwestycje', 'Kopki', 'Marysia', 'Podróże', 'Rodzina', 'TED', 'Zdrowie & Sport' ];
-  const inStatement = '(' + notebooks.map( n => "'" + n + "'" ).join( ',') + ')';
 
   const data = {
     'notes': [],
@@ -48,6 +47,7 @@ function loadNotes( mainWindow, localNoteStore ) {
       console.error(err.message);
     }
     rows.forEach( function( row ) {
+      console.log( 'Reading note ' + row.ZTITLE );
       const note = {
         'title' : row.ZTITLE,
         'guid' : row.ZGUID,
@@ -65,9 +65,9 @@ function loadNotes( mainWindow, localNoteStore ) {
       }
     } );
 
-    Promise.all( data.notes.map( note => new Promise( (resolve, reject) => {
-      fs.readFile( note.dir + '/content.enml', {encoding: 'utf-8'}, function(err,notecontent){
-          if ( !err ) {
+    Promise.all( data.notes.map( note => new Promise( ( resolve, reject ) => {
+      fs.readFile( note.dir + '/content.enml', {encoding: 'utf-8'}, function( err,notecontent ){
+          if ( ! err ) {
               let content = notecontent.replace(/(<([^>]+)>)/ig," ");
               content = content.replace(/\s\s+/g, ' ');
               note.snippet = content.substr( 0, 100 );
@@ -85,6 +85,7 @@ function loadNotes( mainWindow, localNoteStore ) {
               } );
               resolve();
           } else {
+              console.error( err );
               reject( err );
           }
       });
@@ -120,7 +121,7 @@ function createWindow() {
       submenu: [
         {
           label:'Save Data',
-          click() {
+          click: function() {
             saveDir = dialog.showSaveDialogSync( mainWindow, {
               buttonLabel: 'Save current state here',
             } );
@@ -132,11 +133,12 @@ function createWindow() {
         },
         {
           label:'Open Saved State',
-          click() {
+          click: function() {
             const file = dialog.showOpenDialogSync({ properties: ['openFile'], buttonLabel: 'Open this saved session' });
             if ( file ) {
               loadFromCache( mainWindow, file[0] );
             }
+            console.log( file );
           }
         },
         {
