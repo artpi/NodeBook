@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
               notes[ rnote.guid ] = {
                 data: {
                   color: nColors[ rnote.notebook ],
-                  snippet: term.note.snippet,
+                  snippet: rnote.snippet,
                   id: rnote.guid,
                   name: rnote.title,
                 }

@@ -63,8 +63,10 @@ function loadNotes( mainWindow ) {
     Promise.all( data.notes.map( note => new Promise( (resolve, reject) => {
       fs.readFile( note.dir + '/content.enml', {encoding: 'utf-8'}, function(err,notecontent){
           if ( !err ) {
-              const content = notecontent.replace(/(<([^>]+)>)/ig," ");
-              
+              let content = notecontent.replace(/(<([^>]+)>)/ig," ");
+              content = content.replace(/\s\s+/g, ' ');
+              note.snippet = content.substr( 0, 100 );
+
               Object.values( data.terms ).forEach( term => {
                 if( term.term.length < 5 ) {
                   return;
@@ -75,12 +77,6 @@ function loadNotes( mainWindow ) {
                 if( content.search( term.regexp ) !== -1 ) {
                   term.references.push( note );
                 }
-              } );
-              fs.readFile( note.dir + '/snippet.txt', {encoding: 'utf-8'}, function( err,snippetContent ){
-                if ( !err ) {
-                  resolve();
-                }
-                reject();
               } );
               
           } else {
