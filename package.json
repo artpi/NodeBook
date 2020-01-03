@@ -18,9 +18,11 @@
       "category": "your.app.category.type"
     }
   },
+  "homepage": "./",
   "scripts": {
     "start": "react-scripts start",
-    "electron-dev": "concurrently \"BROWSER=none yarn start\" \"wait-on http://localhost:3000 && electron .\"",
+    "build": "react-scripts build",
+    "dev": "concurrently \"BROWSER=none yarn start\" \"wait-on http://localhost:3000 && electron .\"",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "postinstall": "electron-builder install-app-deps"

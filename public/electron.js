@@ -27,6 +27,7 @@ function loadFromCache( mainWindow, file ) {
 }
 
 function loadNotes( mainWindow, localNoteStore ) {
+  console.log( 'reading db:' + localNoteStore );
   mainWindow.webContents.send( 'update', "Reading your notes. Please wait." );
   const dbdir = localNoteStore.replace( '/localNoteStore/LocalNoteStore.sqlite', '' );
 
@@ -135,10 +136,10 @@ function createWindow() {
           label:'Open Saved State',
           click: function() {
             const file = dialog.showOpenDialogSync({ properties: ['openFile'], buttonLabel: 'Open this saved session' });
+            console.log( file );
             if ( file ) {
               loadFromCache( mainWindow, file[0] );
             }
-            console.log( file );
           }
         },
         {

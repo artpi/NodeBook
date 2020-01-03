@@ -13,6 +13,40 @@ document.addEventListener('DOMContentLoaded', function() {
           window.selectedNode.remove();
         }
       } );
+      window.ipcRenderer.on('cache', function ( event, arg ) {
+        console.log( 'CACHE LOAD ' + arg );
+        loadingContainer.innerText = "Received data from cache. Parsing";
+        const elements = JSON.parse( arg );
+
+        window.cy = cytoscape({
+          container: cyContainer,
+          elements: elements,
+          style: [
+              {
+                selector: 'node',
+                style: {
+                  'shape': 'ellipse',
+                  'background-color': 'data(color)',
+                  'label': 'data(name)',
+                  "text-wrap": "wrap",
+                  "text-max-width": 80,
+                },
+              }],
+              layout: {
+            'name':'preset',
+          }
+        });
+        window.cy.on('click', 'node', function(event) {
+          console.log(event);
+          selectNode( event.target[0] );
+          window.tooltipObject.style.left= ( event.renderedPosition.x - 50 ) + 'px';
+          window.tooltipObject.style.top= ( event.renderedPosition.y - 100 ) + 'px';
+        });
+        loadingContainer.style.display = 'none';
+        cyContainer.style.display = 'block';
+      //   window.layout = window.cy.layout();
+      //   //this.setState( { cytodata: Object.values( notes ) } );
+    });
 
       window.ipcRenderer.on('menu_save', ( event, arg ) => {
         const elements = JSON.stringify( window.cy.elements().map( el => el.json() ) );
@@ -122,40 +156,6 @@ function selectNode( node ) {
   window.tooltipObject.querySelector('.snippet').innerText = node.json().data.snippet;
   document.getElementById('selected_node_open').setAttribute("href", `evernote:///view/1967834/s13/${json.data.id}/${json.data.id}/`);
 }
-
-      window.ipcRenderer.on('cache', ( event, arg ) => {
-        loadingContainer.innerText = "Received data from cache. Parsing";
-        const elements = JSON.parse( arg );
-
-        window.cy = cytoscape({
-          container: cyContainer,
-          elements: elements,
-          style: [
-              {
-                selector: 'node',
-                style: {
-                  'shape': 'ellipse',
-                  'background-color': 'data(color)',
-                  'label': 'data(name)',
-                  "text-wrap": "wrap",
-                  "text-max-width": 80,
-                },
-              }],
-              layout: {
-            'name':'preset',
-          }
-        });
-        window.cy.on('click', 'node', function(event) {
-          console.log(event);
-          selectNode( event.target[0] );
-          window.tooltipObject.style.left= ( event.renderedPosition.x - 50 ) + 'px';
-          window.tooltipObject.style.top= ( event.renderedPosition.y - 100 ) + 'px';
-        });
-        loadingContainer.style.display = 'none';
-        cyContainer.style.display = 'block';
-      //   window.layout = window.cy.layout();
-      //   //this.setState( { cytodata: Object.values( notes ) } );
-    });
 
 
 
