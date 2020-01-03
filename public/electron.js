@@ -23,7 +23,7 @@ function loadFromCache( mainWindow ) {
 
 function loadNotes( mainWindow ) {
 
-  const notebooks = [ '@Business', 'HotContent', 'Commonplace', 'Ref', 'Zrobic', 'Chcę', 'Earn', 'Grateful', 'Inwestycje', 'Kopki', 'Marysia', 'Podróże', 'Rodzina', 'TED', 'Zdrowie & Sport' ];
+  const notebooks = [ 'Zeszycik', '@Business', 'HotContent', 'Commonplace', 'Ref', 'Zrobic', 'Chcę', 'Earn', 'Grateful', 'Inwestycje', 'Kopki', 'Marysia', 'Podróże', 'Rodzina', 'TED', 'Zdrowie & Sport' ];
   const inStatement = '(' + notebooks.map( n => "'" + n + "'" ).join( ',') + ')';
 
   const data = {
@@ -76,7 +76,13 @@ function loadNotes( mainWindow ) {
                   term.references.push( note );
                 }
               } );
-              resolve( note );
+              fs.readFile( note.dir + '/snippet.txt', {encoding: 'utf-8'}, function( err,snippetContent ){
+                if ( !err ) {
+                  resolve();
+                }
+                reject();
+              } );
+              
           } else {
               reject( err );
           }
@@ -113,7 +119,18 @@ function createWindow() {
   }
   mainWindow.webContents.on('did-finish-load', () => {
     console.log( "Did finishi load fired!" );
-    loadFromCache( mainWindow );
+    // loadFromCache( mainWindow );
+    loadNotes( mainWindow );
+  });
+  ipcMain.on('save_action', ( event, data ) => {
+    console.log( 'Saving' );
+    fs.writeFile( "/Users/artpi/Desktop/nodes_cache.json" ,data, function(err) {
+    if(err) {
+        return console.log(err);
+    }
+    console.log("The file was saved!");
+}); 
+
   });
   
   mainWindow.on('closed', () => mainWindow = null);

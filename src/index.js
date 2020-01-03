@@ -6,12 +6,18 @@ document.addEventListener('DOMContentLoaded', function() {
       const cyContainer = document.getElementById('cy')
       cytoscape.use( coseBilkent );
 
-      let selectedNode = null;
+      window.tooltipObject = document.getElementById('tooltip');
+      window.selectedNode = null;
       document.getElementById('selected_node_hide').addEventListener( 'click', function() {
-        if( selectedNode ) {
-          selectedNode.hide();
+        if( window.selectedNode ) {
+          window.selectedNode.remove();
         }
       } );
+      // document.getElementById('save_action').addEventListener( 'click', function() {
+      //   const elements = JSON.stringify( window.cy.elements().map( el => el.json() ) );
+      //   console.log( 'sending', elements )
+      //   window.ipcRenderer.send( 'save_action', elements );
+      // } );
 
       window.ipcRenderer.on('terms', ( event, arg ) => {
         loadingContainer.innerText = "Received data from filesystem. Parsing";
@@ -31,6 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
               data: {
                 id: term.note.guid,
                 name: term.note.title,
+                notebook: term.note.notebook,
+                snippet: term.note.snippet,
                 color: nColors[ term.note.notebook ],
               }
             };
@@ -40,6 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
               notes[ rnote.guid ] = {
                 data: {
                   color: nColors[ rnote.notebook ],
+                  snippet: term.note.snippet,
                   id: rnote.guid,
                   name: rnote.title,
                 }
@@ -64,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
               {
                 selector: 'node',
                 style: {
-                  shape: 'hexagon',
+                  'shape': 'ellipse',
                   'background-color': 'data(color)',
                   'label': 'data(name)',
                   "text-wrap": "wrap",
@@ -84,14 +93,29 @@ document.addEventListener('DOMContentLoaded', function() {
         cyContainer.style.display = 'block';
       //   window.layout = window.cy.layout();
       //   //this.setState( { cytodata: Object.values( notes ) } );
+        window.cy.on('click', 'node', function(event) {
+          console.log(event);
+          selectNode( event.target[0] );
+          window.tooltipObject.style.left= ( event.renderedPosition.x - 50 ) + 'px';
+          window.tooltipObject.style.top= ( event.renderedPosition.y - 100 ) + 'px';
+        });
     });
 
 function selectNode( node ) {
-  selectedNode = node;
+  if ( window.selectedNode ) {
+    window.selectedNode.style( 'shape', 'ellipse' );
+  }
+  node.style( 'shape', 'star' );
+  node.style( 'background-color', 'blue' );
+  node.connectedEdges().forEach( function( edge ) {
+    console.log( edge.select() );
+  } );
+
+  window.selectedNode = node;
   const json = node.json();
   console.log( node.json() );
-  const el = document.getElementById( 'selectednote' );
-  el.innerHTML = '<h4>' + node.json().data.name + '</h4>';
+  window.tooltipObject.querySelector('.title').innerText = node.json().data.name;
+  window.tooltipObject.querySelector('.snippet').innerText = node.json().data.snippet;
   document.getElementById('selected_node_open').setAttribute("href", `evernote:///view/1967834/s13/${json.data.id}/${json.data.id}/`);
 }
 
@@ -106,7 +130,7 @@ function selectNode( node ) {
               {
                 selector: 'node',
                 style: {
-                  shape: 'hexagon',
+                  'shape': 'ellipse',
                   'background-color': 'data(color)',
                   'label': 'data(name)',
                   "text-wrap": "wrap",
@@ -118,7 +142,10 @@ function selectNode( node ) {
           }
         });
         window.cy.on('click', 'node', function(event) {
+          console.log(event);
           selectNode( event.target[0] );
+          window.tooltipObject.style.left= ( event.renderedPosition.x - 50 ) + 'px';
+          window.tooltipObject.style.top= ( event.renderedPosition.y - 100 ) + 'px';
         });
         loadingContainer.style.display = 'none';
         cyContainer.style.display = 'block';
