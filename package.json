@@ -24,8 +24,9 @@
     "build": "react-scripts build",
     "dev": "concurrently \"BROWSER=none yarn start\" \"wait-on http://localhost:3000 && electron .\"",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder",
-    "postinstall": "electron-builder install-app-deps"
+    "dist": "yarn build && electron-builder",
+    "postinstall": "electron-builder install-app-deps",
+    "opendist": "./dist/mac/NodeBook.app/Contents/MacOS/NodeBook"
   },
   "eslintConfig": {
     "extends": "react-app"
