@@ -211,7 +211,7 @@ function createWindow() {
 	if ( isDev ) {
 		// Open the DevTools.
 		//BrowserWindow.addDevToolsExtension('<location to your react chrome extension>');
-		// mainWindow.webContents.openDevTools();
+		mainWindow.webContents.openDevTools();
 	}
 	mainWindow.webContents.on( 'did-finish-load', () => {
 		console.log( 'Did finishi load fired!' );

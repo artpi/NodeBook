@@ -1,16 +1,17 @@
+import COSEBilkent from 'cytoscape-cose-bilkent';
 const cytoscape = require( 'cytoscape' );
-const coseBilkent = require( 'cytoscape-cose-bilkent' );
+
 
 document.addEventListener( 'DOMContentLoaded', function() {
 	const loadingContainer = document.getElementById( 'loading' );
 	const cyContainer = document.getElementById( 'cy' );
-	cytoscape.use( coseBilkent );
-
+	cytoscape.use( COSEBilkent );
 	window.tooltipObject = document.getElementById( 'tooltip' );
 	window.selectedNode = null;
 	document.getElementById( 'selected_node_hide' ).addEventListener( 'click', function() {
 		if ( window.selectedNode ) {
-			window.selectedNode.remove();
+      window.selectedNode.data( 'hidden', true );
+			window.selectedNode.hide();
 		}
 	} );
 	window.ipcRenderer.on( 'cache', function( event, arg ) {
@@ -65,7 +66,7 @@ document.addEventListener( 'DOMContentLoaded', function() {
 		const terms = JSON.parse( arg );
 		console.log( terms );
 		Object.values( terms ).forEach( term => {
-			if ( term.references.length === 0 ) {
+			if ( term.references.length < 1 ) {
 				return;
 			}
 			if ( ! nColors.hasOwnProperty( term.note.notebook ) ) {
@@ -75,21 +76,25 @@ document.addEventListener( 'DOMContentLoaded', function() {
 						.toString( 16 )
 						.substr( -6 );
 			}
-			if ( ! notes.hasOwnProperty( term.note.guid ) ) {
-				notes[ term.note.guid ] = {
-					data: {
-						id: term.note.guid,
-						name: term.note.title,
-						notebook: term.note.notebook,
-						snippet: term.note.snippet,
-						color: nColors[ term.note.notebook ],
-					},
-				};
-			}
+			notes[ term.note.guid ] = {
+				group: 'nodes',
+				data: {
+					references: term.references.length,
+					id: term.note.guid,
+					name: term.note.title,
+					notebook: term.note.notebook,
+					snippet: term.note.snippet,
+					color: nColors[ term.note.notebook ],
+				},
+			};
+		} );
+		Object.values( terms ).forEach( term => {
 			term.references.forEach( rnote => {
 				if ( ! notes.hasOwnProperty( rnote.guid ) ) {
 					notes[ rnote.guid ] = {
+						group: 'nodes',
 						data: {
+							references: 1,
 							color: nColors[ rnote.notebook ],
 							snippet: rnote.snippet,
 							id: rnote.guid,
@@ -99,7 +104,9 @@ document.addEventListener( 'DOMContentLoaded', function() {
 				}
 				const ref = rnote.guid + '_' + term.note.guid;
 				notes[ ref ] = {
+					group: 'edges',
 					data: {
+						references: 0,
 						id: ref,
 						source: rnote.guid,
 						target: term.note.guid,
@@ -108,7 +115,7 @@ document.addEventListener( 'DOMContentLoaded', function() {
 			} );
 		} );
 		console.log( Object.values( notes ) );
-
+		loadingContainer.innerText = 'Rendering the presentation...';
 		window.cy = cytoscape( {
 			container: cyContainer,
 			elements: Object.values( notes ),
@@ -122,15 +129,34 @@ document.addEventListener( 'DOMContentLoaded', function() {
 						'text-wrap': 'wrap',
 						'text-max-width': 80,
 					},
-				},
+				},{
+					selector: 'node[data][references]',
+					style: {
+						'width': "mapData(references, 0, 4, 60, 200 )",
+    					'height': "mapData(references, 0, 4, 60, 200 )",
+					},
+				}
+				, {
+				  "selector": "edge[target]",
+				  "style": {
+				    "target-arrow-shape": "arrow"
+				  }
+				}
 			],
 			layout: {
-				name: 'cose-bilkent',
-				nodeDimensionsIncludeLabels: true,
-				randomize: true,
-				// Node repulsion (non overlapping) multiplier
-				nodeRepulsion: 450000,
-				dealEdgeLength: 500,
+		        name: 'cose-bilkent',
+	       //        idealEdgeLength: function (edge) {
+		      //   // Default is: 10
+		      //   // Instead, base it on "weight"
+		      //   return edge.data().weight * .5
+		      // },
+		        // concentric: function( node ){
+		        //   return node.data( 'references' );
+		        // },
+		        // levelWidth: function( nodes ){
+		        //   return 3;
+		        // },
+		        animate: false,
 			},
 		} );
 		loadingContainer.style.display = 'none';
