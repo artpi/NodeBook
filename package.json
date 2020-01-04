@@ -25,6 +25,7 @@
     "dev": "concurrently \"BROWSER=none yarn start\" \"wait-on http://localhost:3000 && electron .\"",
     "pack": "electron-builder --dir",
     "eslint": "eslint",
+    "prettier": "prettier --ignore-path .gitignore --write \"{src,public}/*.js\"",
     "dist": "yarn build && electron-builder",
     "postinstall": "electron-builder install-app-deps",
     "opendist": "./dist/mac/NodeBook.app/Contents/MacOS/NodeBook"
