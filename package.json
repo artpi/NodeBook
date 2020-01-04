@@ -24,18 +24,23 @@
     "build": "react-scripts build",
     "dev": "concurrently \"BROWSER=none yarn start\" \"wait-on http://localhost:3000 && electron .\"",
     "pack": "electron-builder --dir",
+    "eslint": "eslint",
     "dist": "yarn build && electron-builder",
     "postinstall": "electron-builder install-app-deps",
     "opendist": "./dist/mac/NodeBook.app/Contents/MacOS/NodeBook"
   },
   "eslintConfig": {
-    "extends": "react-app"
+    "extends": "plugin:@wordpress/eslint-plugin/recommended"
   },
   "devDependencies": {
+    "@wordpress/eslint-plugin": "^3.3.0",
     "concurrently": "^5.0.2",
     "electron": "^7.1.7",
     "electron-builder": "^21.2.0",
     "electron-rebuild": "^1.8.8",
+    "eslint": "6.7.2",
+    "eslint-config-prettier": "6.7.0",
+    "prettier": "^1.19.1",
     "wait-on": "^3.3.0"
   },
   "browserslist": {
