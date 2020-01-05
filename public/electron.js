@@ -14,139 +14,31 @@ const glob = require( 'glob' );
 
 let mainWindow;
 let mainMenu;
+let saveDir;
+const data = {
+	notes: [],
+	terms: {},
+	notebooks: {},
+};
 
 function loadFromCache( mainWindow, file ) {
 	console.log( 'Loading from file ' + file );
-	fs.readFile( file, { encoding: 'utf-8' }, function( err, data ) {
-		console.log( 'File loaded ' + data );
+	fs.readFile( file, { encoding: 'utf-8' }, function( err, fileData ) {
+		fileData = JSON.parse( fileData );
+		console.log( 'File loaded ' );
+		console.log( fileData );
+		data.notebooks = fileData.notebooks;
+		refreshNotebookMenu();
 		if ( ! err ) {
-			mainWindow.webContents.send( 'cache', data );
+			mainWindow.webContents.send( 'cache', JSON.stringify( fileData.elements ) );
 		} else {
 			console.log( err );
 		}
 	} );
 }
 
-function loadNotes( mainWindow, localNoteStore ) {
-	console.log( 'reading db:' + localNoteStore );
-	mainWindow.webContents.send( 'update', 'Reading your notes. Please wait.' );
-	const dbdir = localNoteStore.replace( '/localNoteStore/LocalNoteStore.sqlite', '' );
-
-	const data = {
-		notes: [],
-		terms: {},
-		notebooks: [],
-	};
-
-	let db = new sqlite3.Database( localNoteStore, sqlite3.OPEN_READONLY, err => {
-		if ( err ) {
-			console.error( err.message );
-		}
-		console.log( 'Connected to the chinook database.' );
-	} );
-	//AND NB.ZNAME IN ${inStatement}
-	db.all(
-		`SELECT N.ZGUID,N.ZTITLE, N.ZLOCALUUID, NB.ZNAME FROM ZENNOTE N JOIN ZENNOTEBOOK NB  where N.ZDATEDELETED < 0 AND N.ZNOTEBOOK = NB.Z_PK  ORDER BY N.ZDATEUPDATED DESC;`,
-		( err, rows ) => {
-			if ( err ) {
-				console.error( err.message );
-			}
-			rows.forEach( function( row ) {
-				console.log( 'Reading note ' + row.ZTITLE );
-				const note = {
-					title: row.ZTITLE,
-					guid: row.ZGUID,
-					notebook: row.ZNAME,
-					dir: dbdir + '/content/' + row.ZLOCALUUID,
-				};
-				if ( data.notebooks.indexOf( row.ZNAME ) === -1 ) {
-					data.notebooks.push( row.ZNAME );
-				}
-				data.notes.push( note );
-				if ( ! data.terms.hasOwnProperty( row.ZTITLE ) ) {
-					data.terms[ row.ZTITLE ] = {
-						term: row.ZTITLE,
-						note: note,
-						references: [],
-						regexp: new RegExp(
-							'[^0-9a-zA-Z]' +
-								row.ZTITLE.replace( /[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&' ) +
-								'[^0-9a-zA-Z]',
-							'i'
-						),
-					};
-				}
-			} );
-
-			Promise.all(
-				data.notes.map(
-					note =>
-						new Promise( ( resolve, reject ) => {
-							fs.readFile( note.dir + '/content.enml', { encoding: 'utf-8' }, function(
-								err,
-								notecontent
-							) {
-								if ( ! err ) {
-									let content = notecontent.replace( /(<([^>]+)>)/gi, ' ' );
-									content = content.replace( /\s\s+/g, ' ' );
-									note.snippet = content.substr( 0, 100 );
-
-									Object.values( data.terms ).forEach( term => {
-										if ( term.term.length < 5 ) {
-											return;
-										}
-										if ( term.note.guid === note.guid ) {
-											return;
-										}
-										if ( content.search( term.regexp ) !== -1 ) {
-											term.references.push( note );
-										}
-									} );
-									resolve();
-								} else {
-									console.error( err );
-									reject( err );
-								}
-							} );
-						} )
-				)
-			).then( dat => {
-				mainWindow.webContents.send( 'terms', JSON.stringify( data.terms ) );
-			} );
-			mainMenu.append(
-				new MenuItem( {
-					label: 'Notebooks',
-					submenu: data.notebooks.map( nbook => ( {
-						label: nbook,
-						click: function() {
-							console.log( nbook );
-						},
-					} ) ),
-				} )
-			);
-			Menu.setApplicationMenu( mainMenu );
-		}
-	);
-
-	db.close( err => {
-		if ( err ) {
-			console.error( err.message );
-		}
-		console.log( 'Close the database connection.' );
-	} );
-}
-
-function createWindow() {
-	mainWindow = new BrowserWindow( {
-		width: 900,
-		height: 680,
-		webPreferences: {
-			nodeIntegration: true,
-			preload: __dirname + '/preload.js',
-		},
-	} );
-	let saveDir = '';
-	mainMenu = Menu.buildFromTemplate( [
+function refreshNotebookMenu() {
+		mainMenu = Menu.buildFromTemplate( [
 		{
 			label: 'File',
 			submenu: [
@@ -204,24 +96,151 @@ function createWindow() {
 			],
 		},
 	] );
+	if( data.notebooks ) {
+		mainMenu.insert( 1, new MenuItem( {
+			label: 'Notebooks',
+			submenu: Object.values( data.notebooks ).map( nbook => ( {
+				label: ( nbook.hidden ? 'x' : '✔' ) + nbook.name,
+				click: () => {
+					if( ! nbook.hidden ) {
+						data.notebooks[ nbook.name ].hidden = ! nbook.hidden;
+						mainWindow.webContents.send( 'notebook_hide', nbook.name );
+						refreshNotebookMenu();
+					}
+				},
+			} ) ),
+		} ) );
+	}
 	Menu.setApplicationMenu( mainMenu );
+}
+
+function loadNotes( mainWindow, localNoteStore ) {
+	console.log( 'reading db:' + localNoteStore );
+	mainWindow.webContents.send( 'update', 'Reading your notes. Please wait.' );
+	const dbdir = localNoteStore.replace( '/localNoteStore/LocalNoteStore.sqlite', '' );
+
+	let db = new sqlite3.Database( localNoteStore, sqlite3.OPEN_READONLY, err => {
+		if ( err ) {
+			console.error( err.message );
+		}
+		console.log( 'Connected to the chinook database.' );
+	} );
+	//AND NB.ZNAME IN ${inStatement}
+	db.all(
+		`SELECT N.ZGUID,N.ZTITLE, N.ZLOCALUUID, NB.ZNAME FROM ZENNOTE N JOIN ZENNOTEBOOK NB  where N.ZDATEDELETED < 0 AND N.ZNOTEBOOK = NB.Z_PK  ORDER BY N.ZDATEUPDATED DESC;`,
+		( err, rows ) => {
+			if ( err ) {
+				console.error( err.message );
+			}
+			rows.forEach( function( row ) {
+				console.log( 'Reading note ' + row.ZTITLE );
+				const note = {
+					title: row.ZTITLE,
+					guid: row.ZGUID,
+					notebook: row.ZNAME,
+					dir: dbdir + '/content/' + row.ZLOCALUUID,
+				};
+				if( ! ( data.notebooks[ row.ZNAME ] ) ) {
+					data.notebooks[ row.ZNAME ] = {
+						'hidden': false,
+						'name': row.ZNAME,
+					}
+				}
+				data.notes.push( note );
+				if ( ! data.terms.hasOwnProperty( row.ZTITLE ) ) {
+					data.terms[ row.ZTITLE ] = {
+						term: row.ZTITLE,
+						note: note,
+						references: [],
+						regexp: new RegExp(
+							'[^0-9a-zA-Z]' +
+								row.ZTITLE.replace( /[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&' ) +
+								'[^0-9a-zA-Z]',
+							'i'
+						),
+					};
+				}
+			} );
+
+			Promise.all(
+				data.notes.map(
+					note =>
+						new Promise( ( resolve, reject ) => {
+							fs.readFile( note.dir + '/content.enml', { encoding: 'utf-8' }, function(
+								err,
+								notecontent
+							) {
+								if ( ! err ) {
+									let content = notecontent.replace( /(<([^>]+)>)/gi, ' ' );
+									content = content.replace( /\s\s+/g, ' ' );
+									note.snippet = content.substr( 0, 100 );
+
+									Object.values( data.terms ).forEach( term => {
+										if ( term.term.length < 5 ) {
+											return;
+										}
+										if ( term.note.guid === note.guid ) {
+											return;
+										}
+										if ( content.search( term.regexp ) !== -1 ) {
+											term.references.push( note );
+										}
+									} );
+									resolve();
+								} else {
+									console.error( err );
+									reject( err );
+								}
+							} );
+						} )
+				)
+			).then( dat => {
+				refreshNotebookMenu();
+				mainWindow.webContents.send( 'terms', JSON.stringify( data.terms ) );
+			} );
+
+		}
+	);
+
+	db.close( err => {
+		if ( err ) {
+			console.error( err.message );
+		}
+		console.log( 'Close the database connection.' );
+	} );
+}
+
+function createWindow() {
+	mainWindow = new BrowserWindow( {
+		width: 900,
+		height: 680,
+		webPreferences: {
+			nodeIntegration: true,
+			preload: __dirname + '/preload.js',
+		},
+	} );
+	refreshNotebookMenu();
+
 	mainWindow.loadURL(
 		isDev ? 'http://localhost:3000' : `file://${ path.join( __dirname, '../build/index.html' ) }`
 	);
 	if ( isDev ) {
 		// Open the DevTools.
 		//BrowserWindow.addDevToolsExtension('<location to your react chrome extension>');
-		mainWindow.webContents.openDevTools();
+		// mainWindow.webContents.openDevTools();
 	}
 	mainWindow.webContents.on( 'did-finish-load', () => {
 		console.log( 'Did finishi load fired!' );
 		// loadFromCache( mainWindow );
 		// loadNotes( mainWindow );
 	} );
-	ipcMain.on( 'save_action', ( event, data ) => {
+	ipcMain.on( 'save_action', ( event, fileData ) => {
+		fileData = JSON.stringify( {
+			elements: JSON.parse( fileData ),
+			notebooks: data.notebooks
+		} );
 		console.log( 'Saving' );
-		console.log( data );
-		fs.writeFile( saveDir, data, function( err ) {
+		fs.writeFile( saveDir, fileData, function( err ) {
 			if ( err ) {
 				return console.log( err );
 			}

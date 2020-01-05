@@ -1,19 +1,39 @@
 import COSEBilkent from 'cytoscape-cose-bilkent';
 const cytoscape = require( 'cytoscape' );
 
+function hideNode( node ) {
+	// If node has only 1 connection, hide it.
+	console.log( 'hidind', node.id );
+	node.connectedEdges().forEach( edge => edge.connectedNodes().forEach( connectedNode => {
+		console.log( 'node', connectedNode.id(), connectedNode.connectedEdges().length );
+		if ( connectedNode.id() !== node.id() && connectedNode.connectedEdges().length < 2 ) {
+			// connectedNode.data( 'hidden', true );
+			connectedNode.remove();
+		}
+	} ) );
+	// node.data( 'hidden', true );
+	node.remove();
+}
 
 document.addEventListener( 'DOMContentLoaded', function() {
-	const loadingContainer = document.getElementById( 'loading' );
 	const cyContainer = document.getElementById( 'cy' );
 	cytoscape.use( COSEBilkent );
 	window.tooltipObject = document.getElementById( 'tooltip' );
 	window.selectedNode = null;
 	document.getElementById( 'selected_node_hide' ).addEventListener( 'click', function() {
 		if ( window.selectedNode ) {
-      window.selectedNode.data( 'hidden', true );
-			window.selectedNode.hide();
+			hideNode( window.selectedNode );
 		}
 	} );
+
+	window.ipcRenderer.on( 'notebook_hide', function hideNotebook( event, notebook ) {
+		window.cy.elements().forEach( function( el ) {
+			if( el.data( 'notebook' ) === notebook ) {
+				hideNode( el );
+			}
+		} );
+	} );
+
 
 	function runCytoscape( elements, layout ) {
 		window.cy = cytoscape( {
@@ -28,12 +48,8 @@ document.addEventListener( 'DOMContentLoaded', function() {
 						label: 'data(name)',
 						'text-wrap': 'wrap',
 						'text-max-width': 80,
-					},
-				},{
-					selector: 'node[data][references]',
-					style: {
-						'width': "mapData(references, 0, 4, 60, 200 )",
-    					'height': "mapData(references, 0, 4, 60, 200 )",
+						width: 'mapData(references, 0, 40, 20, 80)',
+    					height: 'mapData(references, 0, 40, 20, 80)',
 					},
 				}
 				, {
@@ -50,14 +66,16 @@ document.addEventListener( 'DOMContentLoaded', function() {
 			window.tooltipObject.style.left = event.renderedPosition.x - 50 + 'px';
 			window.tooltipObject.style.top = event.renderedPosition.y - 100 + 'px';
 		} );
-		loadingContainer.style.display = 'none';
+
+		document.getElementById( 'loading' ).style.display = 'block';
+		document.getElementById( 'loading' ).style.display = 'none';
 		cyContainer.style.display = 'block';
 	}
 
 	// This is ran when we get data from previously saved file loaded in.
 	window.ipcRenderer.on( 'cache', function( event, arg ) {
 		console.log( 'CACHE LOAD ' + arg );
-		loadingContainer.innerText = 'Received data from cache. Parsing';
+		document.querySelector( '#loading .intro p' ).innerText = 'Received data from external file. Parsing';
 		const elements = JSON.parse( arg );
 		runCytoscape( elements, {
 				name: 'preset',
@@ -70,11 +88,13 @@ document.addEventListener( 'DOMContentLoaded', function() {
 		window.ipcRenderer.send( 'save_action', elements );
 	} );
 	window.ipcRenderer.on( 'update', ( event, arg ) => {
-		loadingContainer.innerText = arg;
+		document.getElementById( 'loading' ).style.display = 'block';
+		document.querySelector( '#loading .intro p' ).innerText = arg;
+		document.getElementById( 'intro' ).style.display = 'none';
 	} );
 
 	window.ipcRenderer.on( 'terms', ( event, arg ) => {
-		loadingContainer.innerText = 'Received data from filesystem. Parsing';
+		document.querySelector( '#loading .intro p' ).innerText = 'Received data from the system. Parsing';
 		let notes = {};
 		let nColors = {};
 		const terms = JSON.parse( arg );
@@ -110,6 +130,7 @@ document.addEventListener( 'DOMContentLoaded', function() {
 						data: {
 							references: 1,
 							color: nColors[ rnote.notebook ],
+							notebook: rnote.notebook,
 							snippet: rnote.snippet,
 							id: rnote.guid,
 							name: rnote.title,
@@ -129,10 +150,14 @@ document.addEventListener( 'DOMContentLoaded', function() {
 			} );
 		} );
 
-		loadingContainer.innerText = 'Rendering the presentation...';
+		document.querySelector( '#loading .intro p' ).innerText = 'Rendering the presentation...';
 		runCytoscape( Object.values( notes ), {
 		        name: 'cose-bilkent',
-		        animate: false,
+		        nodeRepulsion: 1000000,
+		        edgeElasticity: 0.0001,
+		        gravity: 0.0001,
+		        fit: true,
+		        // animate: false,
 		} );
 
 	} );

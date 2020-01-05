@@ -16,9 +16,15 @@
         left: 0px;
         display: none;
     }
-    #loading {
+    #loading{
+      display: none;
+    }
+    .main {
         text-align: center;
-        padding-top: 300px;
+        width: 100%;
+        position: absolute;
+        background-color: #706993;
+        min-height: 100%;
     }
     #tooltip {
       display: block;
@@ -54,12 +60,118 @@
       text-align: left;
       font-size: 8px;
     }
+    .logo {
+      margin-top: 5%;
+      margin-bottom: 0;
+      width: 100%;
+      height:220px;
+      text-align:center;
+    }
+    .logo svg {
+      width: 600px;
+    }
+    .logo svg line {
+      stroke: #d3fac7;
+    }
+    .logo svg text {
+      fill: #d3fac7;
+    }
+    .logo svg circle {
+      fill: #706993;
+      stroke: #d3fac7;
+    }
+    .intro {
+      font-size: 30px;
+      line-height: 1.4em;
+      margin-left:10%;
+      margin-right: 10%;
+      text-align: left;
+      overflow-x: hidden;
+      color: #d3fac7;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    }
+    .intro ol {
+      color: #a0c1b9;
+    }
+    
+    .rotating{
+
+      /* Things added */
+      animation: ckw 6s linear infinite;
+      transform-origin: 50% 50%;
+      display: inline-block;
+      /* <--- */
+  }
+  @keyframes ckw {
+      0% {
+          transform: rotate(0deg);
+      }
+      100% {
+          transform: rotate(360deg);
+      }
+  }
+  
 </style>
 
 <body style="display: flex; flex-direction: row;padding:0;margin:0">
     <div>
       <div id="cy" ></div>
-      <div id="loading"> Load data from saved set OR load from Evernote if you are using this for the first time. Use the top bar menu, </div>
+      <div id="intro" class="main">
+        <div class='logo'>
+          <svg viewBox="0 0 1766 443" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+          <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+              <line x1="56.5" y1="46.5" x2="313.5" y2="405.5" id="Line-2" stroke="#000000" stroke-width="13" stroke-linecap="square"></line>
+              <line x1="46.5" y1="46.5" x2="46.5" y2="405.5" id="Line" stroke="#000000" stroke-width="13" stroke-linecap="square"></line>
+              <circle id="Oval" stroke="#000000" stroke-width="16" fill="#FFFFFF" cx="46.5" cy="396.5" r="38.5"></circle>
+              <circle id="Oval" stroke="#000000" stroke-width="16" fill="#FFFFFF" cx="46.5" cy="46.5" r="38.5"></circle>
+              <circle id="Oval" stroke="#000000" stroke-width="16" fill="#FFFFFF" cx="46.5" cy="221.5" r="38.5"></circle>
+              <line x1="307.5" y1="46.5" x2="307.5" y2="405.5" id="Line" stroke="#000000" stroke-width="13" stroke-linecap="square"></line>
+              <circle id="Oval" stroke="#000000" stroke-width="16" fill="#FFFFFF" cx="307.5" cy="396.5" r="38.5"></circle>
+              <circle id="Oval" stroke="#000000" stroke-width="16" fill="#FFFFFF" cx="307.5" cy="46.5" r="38.5"></circle>
+              <circle id="Oval" stroke="#000000" stroke-width="16" fill="#FFFFFF" cx="307.5" cy="221.5" r="38.5"></circle>
+              <circle id="Oval" stroke="#000000" stroke-width="16" fill="#FFFFFF" cx="185.5" cy="226.5" r="38.5"></circle>
+              <text id="odebook" font-family="Futura-Medium, Futura" font-size="295" font-weight="400" fill="#000000">
+                  <tspan x="408" y="366">odebook</tspan>
+              </text>
+          </g>
+      </svg>
+        </div>
+        <div class='intro'>
+          <p>Nodebook is a tool to explore the treasure trove of your Evernote data. It is meant to help you visually wander around your notes and discover new connections.</p>
+          <ol>
+            <li>To start, choose "Load Evernote data" from the system bar ☝️</li>
+            <li>You can save the state of your graph</li>
+            <li>If your graph is messy, try hiding individual nodes or whole notebooks ( from "Notebooks" menu in the system bar)</li>
+          </ol>
+        </div>
+      </div>
+
+
+
+      <div id="loading" class="main" style="overflow: hidden">
+                          <div class='logo rotating' style="margin-top: 100px;margin-bottom: 70px">
+                            <svg style="width:140px" viewBox="0 0 361 443" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                            <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                                <line x1="56.5" y1="46.5" x2="313.5" y2="405.5" id="Line-2" stroke="#000000" stroke-width="13" stroke-linecap="square"></line>
+                                <line x1="46.5" y1="46.5" x2="46.5" y2="405.5" id="Line" stroke="#000000" stroke-width="13" stroke-linecap="square"></line>
+                                <circle id="Oval" stroke="#000000" stroke-width="16" fill="#FFFFFF" cx="46.5" cy="396.5" r="38.5"></circle>
+                                <circle id="Oval" stroke="#000000" stroke-width="16" fill="#FFFFFF" cx="46.5" cy="46.5" r="38.5"></circle>
+                                <circle id="Oval" stroke="#000000" stroke-width="16" fill="#FFFFFF" cx="46.5" cy="221.5" r="38.5"></circle>
+                                <line x1="307.5" y1="46.5" x2="307.5" y2="405.5" id="Line" stroke="#000000" stroke-width="13" stroke-linecap="square"></line>
+                                <circle id="Oval" stroke="#000000" stroke-width="16" fill="#FFFFFF" cx="307.5" cy="396.5" r="38.5"></circle>
+                                <circle id="Oval" stroke="#000000" stroke-width="16" fill="#FFFFFF" cx="307.5" cy="46.5" r="38.5"></circle>
+                                <circle id="Oval" stroke="#000000" stroke-width="16" fill="#FFFFFF" cx="307.5" cy="221.5" r="38.5"></circle>
+                                <circle id="Oval" stroke="#000000" stroke-width="16" fill="#FFFFFF" cx="185.5" cy="226.5" r="38.5"></circle>
+                            </g>
+                        </svg>
+                      </div>
+                      <div class='intro' style="text-align:center;font-size: 50px;">
+                        <p>Reading files from the filesystem</p>
+                      </div>
+                </div>
+      </div>
+
+
       <div id='tooltip'>
               <h4 class='title'></h4>
               <p class='snippet'></p>
