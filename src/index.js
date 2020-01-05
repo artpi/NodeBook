@@ -14,11 +14,8 @@ document.addEventListener( 'DOMContentLoaded', function() {
 			window.selectedNode.hide();
 		}
 	} );
-	window.ipcRenderer.on( 'cache', function( event, arg ) {
-		console.log( 'CACHE LOAD ' + arg );
-		loadingContainer.innerText = 'Received data from cache. Parsing';
-		const elements = JSON.parse( arg );
 
+	function runCytoscape( elements, layout ) {
 		window.cy = cytoscape( {
 			container: cyContainer,
 			elements: elements,
@@ -32,22 +29,39 @@ document.addEventListener( 'DOMContentLoaded', function() {
 						'text-wrap': 'wrap',
 						'text-max-width': 80,
 					},
-				},
+				},{
+					selector: 'node[data][references]',
+					style: {
+						'width': "mapData(references, 0, 4, 60, 200 )",
+    					'height': "mapData(references, 0, 4, 60, 200 )",
+					},
+				}
+				, {
+				  "selector": "edge[target]",
+				  "style": {
+				    "target-arrow-shape": "arrow"
+				  }
+				}
 			],
-			layout: {
-				name: 'preset',
-			},
+			layout: layout,
 		} );
 		window.cy.on( 'click', 'node', function( event ) {
-			console.log( event );
 			selectNode( event.target[ 0 ] );
 			window.tooltipObject.style.left = event.renderedPosition.x - 50 + 'px';
 			window.tooltipObject.style.top = event.renderedPosition.y - 100 + 'px';
 		} );
 		loadingContainer.style.display = 'none';
 		cyContainer.style.display = 'block';
-		//   window.layout = window.cy.layout();
-		//   //this.setState( { cytodata: Object.values( notes ) } );
+	}
+
+	// This is ran when we get data from previously saved file loaded in.
+	window.ipcRenderer.on( 'cache', function( event, arg ) {
+		console.log( 'CACHE LOAD ' + arg );
+		loadingContainer.innerText = 'Received data from cache. Parsing';
+		const elements = JSON.parse( arg );
+		runCytoscape( elements, {
+				name: 'preset',
+		} );
 	} );
 
 	window.ipcRenderer.on( 'menu_save', ( event, arg ) => {
@@ -114,61 +128,13 @@ document.addEventListener( 'DOMContentLoaded', function() {
 				};
 			} );
 		} );
-		console.log( Object.values( notes ) );
+
 		loadingContainer.innerText = 'Rendering the presentation...';
-		window.cy = cytoscape( {
-			container: cyContainer,
-			elements: Object.values( notes ),
-			style: [
-				{
-					selector: 'node',
-					style: {
-						shape: 'ellipse',
-						'background-color': 'data(color)',
-						label: 'data(name)',
-						'text-wrap': 'wrap',
-						'text-max-width': 80,
-					},
-				},{
-					selector: 'node[data][references]',
-					style: {
-						'width': "mapData(references, 0, 4, 60, 200 )",
-    					'height': "mapData(references, 0, 4, 60, 200 )",
-					},
-				}
-				, {
-				  "selector": "edge[target]",
-				  "style": {
-				    "target-arrow-shape": "arrow"
-				  }
-				}
-			],
-			layout: {
+		runCytoscape( Object.values( notes ), {
 		        name: 'cose-bilkent',
-	       //        idealEdgeLength: function (edge) {
-		      //   // Default is: 10
-		      //   // Instead, base it on "weight"
-		      //   return edge.data().weight * .5
-		      // },
-		        // concentric: function( node ){
-		        //   return node.data( 'references' );
-		        // },
-		        // levelWidth: function( nodes ){
-		        //   return 3;
-		        // },
 		        animate: false,
-			},
 		} );
-		loadingContainer.style.display = 'none';
-		cyContainer.style.display = 'block';
-		//   window.layout = window.cy.layout();
-		//   //this.setState( { cytodata: Object.values( notes ) } );
-		window.cy.on( 'click', 'node', function( event ) {
-			console.log( event );
-			selectNode( event.target[ 0 ] );
-			window.tooltipObject.style.left = event.renderedPosition.x - 50 + 'px';
-			window.tooltipObject.style.top = event.renderedPosition.y - 100 + 'px';
-		} );
+
 	} );
 
 	function selectNode( node ) {
