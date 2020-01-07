@@ -67,7 +67,7 @@ document.addEventListener( 'DOMContentLoaded', function() {
 			window.tooltipObject.style.top = event.renderedPosition.y - 100 + 'px';
 		} );
 
-		document.getElementById( 'loading' ).style.display = 'block';
+		document.getElementById( 'intro' ).style.display = 'none';
 		document.getElementById( 'loading' ).style.display = 'none';
 		cyContainer.style.display = 'block';
 	}
@@ -75,7 +75,8 @@ document.addEventListener( 'DOMContentLoaded', function() {
 	// This is ran when we get data from previously saved file loaded in.
 	window.ipcRenderer.on( 'cache', function( event, arg ) {
 		console.log( 'CACHE LOAD ' + arg );
-		document.querySelector( '#loading .intro p' ).innerText = 'Received data from external file. Parsing';
+		document.getElementById( 'loading' ).style.display = 'block';
+		document.getElementById( 'intro' ).style.display = 'none';
 		const elements = JSON.parse( arg );
 		runCytoscape( elements, {
 				name: 'preset',
