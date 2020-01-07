@@ -5,6 +5,12 @@ Nodebook is a tool to explore the treasure trove of your Evernote data. It is me
 It was inspired by the Roam note taking tool.
 NodeBook takes all your Evernote notes and searches titles inside other notes, coming up with the reference graph.
 
+![Main screen](/assets/screenshot1.png)
+
+
+![Rendered graph](/assets/screenshot2.png)
+
+
 ### Features
 - Visual representation of your knowledge
 - Once you click on the nod(t)e, you can hide it - especially useful for "Superconnnectors" that introduce a noise to the graph
