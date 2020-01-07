@@ -29,4 +29,7 @@ NodeBook takes all your Evernote notes and searches titles inside other notes, c
 1. ONce notes are loaded, the app will render a graph. Sometimes you have to pan the rendered screen with scroll wheel to find it.
 
 ## Contributing
-1. PRs welcome!
+
+This is very very v0.1. It took me 5 days to produce the app in this state, so obviously there are improvements to be made.
+- [PRs welcome](https://github.com/artpi/NodeBook)!
+- `yarn dev` will launch the app in the development state
