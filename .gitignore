@@ -25,5 +25,5 @@ yarn-error.log*
 package
 
 /dist/*
-!/dist/NodeBook-0.1.0.dmg
+
 
